@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using VillaManagement.Application.Common.Interfaces;
 using VillaManagement.Domain.Entities;
 using VillaManagement.Infrastructure.Data;
 
@@ -6,15 +7,15 @@ namespace VillaManagement.Web.Controllers
 {
     public class VillaController : Controller
     {
-        private readonly ApplicationDbContext _db;
-        public VillaController(ApplicationDbContext db)
+        private readonly IVillaRepository _villaRepo;
+        public VillaController(IVillaRepository villaRepo)
         {
-            _db = db;
+            _villaRepo = villaRepo;
 
         }
         public IActionResult Index()
         {
-            var villas=_db.Villas.ToList();
+            var villas= _villaRepo.GetAll();
             return View(villas);
         }
         public IActionResult Create()
@@ -30,16 +31,16 @@ namespace VillaManagement.Web.Controllers
             }
             if (ModelState.IsValid)
             {
-                _db.Villas.Add(obj);
-                _db.SaveChanges();
+                _villaRepo.Add(obj);
+                _villaRepo.Save();
                 TempData["success"] = "The villa has been created successfully";
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
             return View();
         }
         public IActionResult Update(int villaId)
         {
-            Villa? obj=_db.Villas.FirstOrDefault(x => x.Id == villaId);
+            Villa? obj= _villaRepo.Get(x => x.Id == villaId);
             // Villa? obj=_db.Villas.Find(villaId)
             // var VillaList=_db.Villas.Where(u=>u.Price>50 && u.Occupancy>0);
             if (obj == null)
@@ -54,16 +55,16 @@ namespace VillaManagement.Web.Controllers
            
             if (ModelState.IsValid && obj.Id>0)
             {
-                _db.Villas.Update(obj);
-                _db.SaveChanges();
+                _villaRepo.Update(obj);
+                _villaRepo.Save();
                 TempData["success"] = "The villa has been update successfully";
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
             return View();
         }
         public IActionResult Delete(int villaId)
         {
-            Villa? obj = _db.Villas.FirstOrDefault(x => x.Id == villaId);
+            Villa? obj = _villaRepo.Get(x => x.Id == villaId);
             // Villa? obj=_db.Villas.Find(villaId)
             // var VillaList=_db.Villas.Where(u=>u.Price>50 && u.Occupancy>0);
             if (obj is null)
@@ -76,13 +77,13 @@ namespace VillaManagement.Web.Controllers
         [HttpPost]
         public IActionResult Delete(Villa obj)
         {
-            Villa? objFromDb = _db.Villas.FirstOrDefault(v => v.Id == obj.Id);
+            Villa? objFromDb = _villaRepo.Get(v => v.Id == obj.Id);
             if (objFromDb is not null)
             {
-                _db.Villas.Remove(objFromDb);
-                _db.SaveChanges();
+                _villaRepo.Remove(objFromDb);
+                _villaRepo.Save();
                 TempData["success"] = "The Villa has been deleted successfully";
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Index));
             }
             TempData["error"] = "The villa could not be deleted";
             return View();
